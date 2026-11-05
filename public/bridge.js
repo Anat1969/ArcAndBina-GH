@@ -11,7 +11,7 @@
     var bar = document.createElement("div");
     bar.id = "ab-bridge"; bar.setAttribute("dir", "rtl"); bar.setAttribute("role", "note");
     bar.style.cssText = "position:fixed;inset-inline:0;bottom:0;z-index:2147483000;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 16px;background:#16303A;color:#fff;font:14px/1.4 'IBM Plex Sans Hebrew',system-ui,sans-serif;box-shadow:0 -4px 16px rgba(0,0,0,.18)";
-    var t = document.createElement("span");
+    var t = document.createElement("span"); t.style.cssText = "min-width:0;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical";
     var b = document.createElement("b"); b.textContent = "הגעת מארק ובינה: ";
     t.appendChild(b); t.appendChild(document.createTextNode(q));
     var actions = document.createElement("span"); actions.style.cssText = "display:flex;gap:8px;flex:none";
@@ -19,10 +19,13 @@
     a.style.cssText = "background:#DCEAEC;color:#16303A;padding:8px 12px;text-decoration:none;font-weight:600";
     var x = document.createElement("button"); x.type = "button"; x.textContent = "סגירה";
     x.style.cssText = "background:transparent;color:#fff;border:0;padding:8px 12px;cursor:pointer;font:inherit";
-    x.onclick = function () { bar.remove(); };
+    x.onclick = function () { bar.remove(); document.body.style.paddingBottom = pad; };
     actions.appendChild(a); actions.appendChild(x);
     bar.appendChild(t); bar.appendChild(actions);
     document.body.appendChild(bar);
+    /* הפס שומר לעצמו מקום בתחתית, כדי לא להסתיר תוכן (בעיקר בנייד) */
+    var pad = document.body.style.paddingBottom;
+    document.body.style.paddingBottom = bar.offsetHeight + "px";
   }
   if (document.body) show(); else document.addEventListener("DOMContentLoaded", show);
 })();
