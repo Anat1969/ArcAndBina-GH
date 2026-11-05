@@ -12,10 +12,11 @@ const IMG = /^image\/(png|jpeg|webp|gif)$/, VID = /^video\/(mp4|webm|quicktime)$
 const isVideo = path => /\.(mp4|webm|mov)$/i.test(path);
 const ACCEPT = "image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm,video/quicktime";
 
-export function slotHTML(slot, p, title = "התמונה") {
-  return `<div class="slot" data-slot="${slot}">
+export function slotHTML(slot, p, title = "התמונה", opt = {}) {
+  const cls = opt.compact ? " compact" : opt.mid ? " mid" : "";
+  return `<div class="slot${cls}" data-slot="${slot}">
     <div class="slot-frame" tabindex="0" role="button" aria-label="מסגרת ${title}: הדבקה, גרירה או בחירת קובץ">
-      <div class="how"><b>כאן מדביקים תמונה או סרטון</b>
+      <div class="how"><b>${opt.compact ? "הדבקה כאן" : "כאן מדביקים תמונה או סרטון"}</b>
         <ol><li>העתקת הפרומפט בכפתור למטה</li><li>יצירה במידג'רני: תמונה, או סרטון מהתמונה</li><li>חזרה לכאן: Ctrl+V לתמונה, גרירה או לחיצה על המסגרת לתמונה ולסרטון</li></ol>
       </div>
       <input type="file" accept="${ACCEPT}" hidden>

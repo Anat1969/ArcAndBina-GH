@@ -9,7 +9,7 @@
   --sans:"IBM Plex Sans Hebrew",system-ui,sans-serif;
   --mono:"IBM Plex Mono","IBM Plex Sans Hebrew",monospace;
   --nav-h:56px; --gap:16px; --pad:24px; --btn-h:40px;
-  --side-r:300px; --side-l:340px;
+  --side-r:240px; --side-l:300px;
   --shadow:0 1px 2px rgba(20,22,24,.05),0 2px 8px rgba(20,22,24,.05);
   --shadow-up:0 2px 4px rgba(20,22,24,.06),0 8px 18px rgba(20,22,24,.09);
 }
@@ -217,7 +217,7 @@ main{outline:none}
 .enter{animation:grow .45s ease-out both}
 @keyframes grow{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
-@media (max-width:1280px){ :root{--side-r:260px;--side-l:300px} }
+@media (max-width:1280px){ :root{--side-r:220px;--side-l:270px} }
 @media (max-width:1100px){
   .page{height:auto;min-height:calc(100dvh - var(--nav-h))}
   .frame{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
@@ -254,4 +254,105 @@ main{outline:none}
   .sheet{box-shadow:none;padding:0}
   .slot-actions,.thumbs{display:none!important}
   @page{size:A4;margin:14mm}
+}
+
+/* ===== סבב 3: תפקיד לכל דף, הסבר לכל בורר, מעבר מונפש ===== */
+.btn,.opt{font-size:13.5px;padding:0 10px}
+.kicker .role{display:inline-block;background:var(--living-soft);color:var(--deep);font-weight:600;padding:1px 8px;margin-inline-end:6px}
+.why{font-size:12.5px;color:var(--ink-3);line-height:1.5;flex:none}
+.why b{color:var(--ink-2)}
+.card.explain{padding:10px 12px}
+.card.explain b{font-size:13.5px}
+.card.explain p{font-size:12.5px;color:var(--ink-2);margin-top:2px}
+.card.flash p{font-size:15px;font-weight:500}
+.opt small.num{margin:0;font-family:var(--mono)}
+.line.series .opt{height:var(--btn-h)}
+
+/* מעבדה: ארבעה כרטיסים במסך, ומפת הצירופים */
+.quad{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;flex:none}
+.quad .q{background:#fff;box-shadow:var(--shadow);border-inline-start:4px solid;padding:10px 14px;min-height:92px}
+.quad .q b{display:block;font-size:11.5px;color:var(--ink-3);font-weight:500;margin-bottom:4px}
+.quad .q p{font-size:15px;line-height:1.45}
+.quad .p{border-color:var(--problem)} .quad .s{border-color:var(--solution)} .quad .i{border-color:var(--marker)} .quad .x{border-color:var(--c)}
+.matrix.lab table{min-width:0;table-layout:fixed}
+.matrix.lab th a{display:block;text-decoration:none;padding:4px;color:var(--ink-2)}
+.matrix.lab th a small{display:block;font-size:10.5px;color:var(--ink-3);font-weight:400}
+.matrix.lab th a[aria-current]{color:var(--deep);font-weight:700;background:var(--living-soft)}
+.matrix.lab th.rowh{width:76px}
+.matrix.lab th.rowh a[aria-current]{background:var(--living-soft)}
+.mcell{display:block;text-decoration:none;font-size:11.5px;line-height:1.3;color:var(--ink-3);height:34px;overflow:hidden;padding:2px 6px;text-align:start;background:var(--rule-soft);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;transition:background .2s}
+.mcell.near{color:var(--ink-2);background:#EDF3F4}
+.mcell.on{background:var(--c);color:#fff;font-weight:600}
+.mcell:hover{background:var(--living-mid);color:var(--ink)}
+.matrix.lab td{padding:2px}
+
+/* תדריך: המהלך הנבחר בראש העמוד */
+.chosen{margin:14px 0 4px;padding:12px 14px;background:#FFFBE0;border-inline-start:4px solid var(--marker)}
+.chosen p{font-size:18px;font-weight:600;margin-top:4px}
+.chosen p.small{font-size:13.5px;font-weight:400;color:var(--ink-2)}
+.move.picked{background:#FFFBE0}
+.pulse{animation:pulse 1.2s ease-out 1}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,228,92,.9)}100%{box-shadow:0 0 0 14px rgba(255,228,92,0)}}
+
+/* מסגרת תמונה: בינונית, ומצומצמת כשהתמונה מופיעה בגיליון */
+.slot.mid .slot-frame{aspect-ratio:4/3}
+.slot.compact{grid-template-columns:96px minmax(0,1fr);align-items:start;column-gap:10px}
+.slot.compact .slot-frame{grid-row:1 / span 2;width:96px}
+.slot.compact .how{padding:6px}
+.slot.compact .how ol{display:none}
+.slot.compact .how b{font-size:11px}
+.slot.compact .thumbs,.slot.compact .distill{display:none}
+.slot.compact .slot-actions{grid-column:2}
+.slot-frame.ghost{pointer-events:none;cursor:default}
+
+/* מרעיון לחוק: שלושה מסלולים */
+.lanecard{display:grid;grid-template-columns:44px minmax(0,1fr);gap:8px;align-items:center;background:#fff;box-shadow:var(--shadow);padding:8px 10px;border-inline-start:4px solid var(--c);flex:none}
+.lanecard .n{font-family:var(--mono);font-size:22px;color:var(--c)}
+.lanecard b{display:block;font-size:14px}
+.lanecard small{font-size:12px;color:var(--ink-3)}
+.tl3{background:#fff;box-shadow:var(--shadow);padding:6px 10px;flex:none;position:relative}
+.tl3h,.tl3r{display:grid;grid-template-columns:minmax(0,1fr) 56px minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:center}
+.tl3h{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);padding:4px 0 6px;border-bottom:1px solid var(--rule);position:sticky;top:0;background:#fff;z-index:1}
+.tl3h span:nth-child(2){text-align:center}
+.tl3r{text-decoration:none;height:24px;font-size:12.5px;border-bottom:1px solid var(--rule-soft);transition:background .15s}
+.tl3r:hover{background:var(--rule-soft)}
+.tl3r .y{font-family:var(--mono);font-weight:500;text-align:center;color:var(--c)}
+.tl3r .c{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl3r .c:not(:empty){color:var(--c);font-weight:500}
+.tl3r .c:not(:empty)::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--c);margin-inline-end:6px;vertical-align:middle}
+.tl3r.on{background:var(--living-soft)}
+.tl3r.on .c:not(:empty){font-weight:700}
+.tl3r.next .y,.tl3r.next .c{color:var(--living)}
+.tdetail{border-inline-start:4px solid var(--c)}
+.tdetail .ty{font-family:var(--mono);font-size:26px;color:var(--c)}
+.tdetail h3{font-size:17px;font-weight:600;margin:2px 0 4px}
+
+/* רשת: אפליקציות בשורות */
+.matrix.net table{min-width:560px}
+.matrix.net th a{text-decoration:none;font-weight:600}
+.matrix.net th a[aria-current]{text-decoration:underline;text-underline-offset:4px}
+.matrix.net tr.on th.rowh{background:var(--living-soft)}
+.matrix.net td.cnt{font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+.bridge.on{box-shadow:0 0 0 2px var(--c),var(--shadow-up)}
+
+/* מעבר מונפש בין מסכים: רכיב שעובר מקום זז אליו, ולא קופץ */
+.lens{view-transition-name:lens}
+.pr{view-transition-name:pane-r}
+.pf{view-transition-name:pane-f}
+.pl{view-transition-name:pane-l}
+.stack.clients{view-transition-name:clients}
+.line.grad{view-transition-name:grad}
+.line.elements{view-transition-name:elements}
+.slot{view-transition-name:slot}
+.sheet{view-transition-name:sheet}
+::view-transition-group(*){animation-duration:.45s;animation-timing-function:cubic-bezier(.2,.8,.2,1)}
+::view-transition-old(root),::view-transition-new(root){animation-duration:.25s}
+@media (prefers-reduced-motion:reduce){::view-transition-group(*){animation:none}}
+@media (max-width:760px){.quad{grid-template-columns:minmax(0,1fr)}.matrix.lab table{min-width:520px}}
+@media (max-width:760px){
+  .tl3h{display:none}
+  .tl3r{grid-template-columns:52px minmax(0,1fr);height:auto;min-height:30px;padding:4px 0}
+  .tl3r .y{order:-1;text-align:start}
+  .tl3r .c:empty{display:none}
+  .tl3r .c{white-space:normal}
 }
