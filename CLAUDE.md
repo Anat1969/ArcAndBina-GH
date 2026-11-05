@@ -32,6 +32,7 @@
 - `src/data.js`: כל התוכן: לקוחות, רכיבים, דרגות, ציר זמן, אפליקציות ברשת. לקוח חדש נוסף כאן, ושכבת חתך שלו ב-`src/section.js`.
 - `src/main.js`: ניתוב לפי `#/`, הדפים, ובונה הפרומפט (`buildPrompt`).
 - `src/gradient3d.js`: מכונת הגרדיאנט ב-Three.js, נטענת בעצלות.
+- פריסה: פרויקט Vercel בשם arc-and-bina, מחובר לריפו. כתובת: https://arc-and-bina.vercel.app. כל מיזוג ל-main נפרס לבד.
 - Vite ו-JS בלי React: אתר תוכן, נאמר מראש כחריגה מברירת המחדל.
 - בכל שינוי בקבצים במטמון: להעלות את `CACHE` ב-`public/sw.js`.
 - בדיקה מקומית: לנתב את `ai-menu.js` לעותק `scripts/ai-menu.local.js`.
