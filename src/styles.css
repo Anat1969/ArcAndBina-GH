@@ -126,7 +126,7 @@ main{outline:none}
 .slot{display:grid;gap:8px;flex:none}
 .slot-frame{position:relative;aspect-ratio:1/1;background:repeating-linear-gradient(45deg,#FBFAF7 0 10px,#F4F2EC 10px 20px);box-shadow:inset 0 0 0 1px var(--rule);display:grid;place-items:center;overflow:hidden;cursor:pointer}
 .slot-frame.drag{box-shadow:inset 0 0 0 3px var(--living)}
-.slot-frame img{width:100%;height:100%;object-fit:cover;display:block}
+.slot-frame img,.slot-frame video{width:100%;height:100%;object-fit:cover;display:block;background:#000}
 .slot-frame .how{padding:16px;display:grid;gap:8px;max-width:260px;text-align:start}
 .slot-frame .how b{font-size:15px}
 .slot-frame .how ol{margin:0;padding-inline-start:18px;font-size:13px;color:var(--ink-2);display:grid;gap:4px}
@@ -135,7 +135,7 @@ main{outline:none}
 .thumbs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px}
 .thumbs button{border:0;padding:0;aspect-ratio:1/1;cursor:pointer;background:#eee;box-shadow:var(--shadow)}
 .thumbs button[aria-pressed="true"]{outline:2px solid var(--living)}
-.thumbs img{width:100%;height:100%;object-fit:cover;display:block}
+.thumbs img,.thumbs video{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
 
 /* ===== גשר לאפליקציה ===== */
 .bridge{background:#fff;box-shadow:var(--shadow);padding:12px 14px;display:grid;gap:6px;border-inline-start:4px solid var(--c,var(--living));flex:none}

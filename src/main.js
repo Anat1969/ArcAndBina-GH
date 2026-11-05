@@ -202,11 +202,15 @@ function mirrorImage() {
   const fig = app.querySelector(".mirror"), frame = app.querySelector(".slot .slot-frame");
   if (!fig || !frame) return;
   const sync = () => {
-    const img = frame.querySelector("img"); if (!img) return;
-    const cur = fig.querySelector("img.m");
-    if (cur?.src === img.src) return;
+    const src = frame.querySelector("img,video"); if (!src) return;
+    const cur = fig.querySelector(".m");
+    if (cur?.src === src.src) return;
     [...fig.children].forEach(n => { if (n.tagName !== "FIGCAPTION") n.remove(); });
-    fig.prepend(Object.assign(new Image(), { src: img.src, alt: img.alt, className: "m", style: "width:100%;display:block;aspect-ratio:1/1;object-fit:cover" }));
+    const m = src.tagName === "VIDEO"
+      ? Object.assign(document.createElement("video"), { src: src.src, muted: true, loop: true, autoplay: src.autoplay, playsInline: true, controls: true })
+      : Object.assign(new Image(), { src: src.src, alt: src.alt });
+    m.className = "m"; m.style.cssText = "width:100%;display:block;aspect-ratio:1/1;object-fit:cover;background:#000";
+    fig.prepend(m);
   };
   const mo = new MutationObserver(sync); mo.observe(frame, { childList: true }); cleanups.push(() => mo.disconnect());
 }
@@ -232,7 +236,7 @@ function article(id) {
           <h2>מה זה אומר לתכנון</h2><p>${a.apply}</p>
         </div>
         <div>
-          <figure class="mirror"><div class="slot-frame" style="pointer-events:none;cursor:default" aria-hidden="true"><div class="how"><b>מקום לתמונה</b><ol><li>הפרומפט בכפתור, בטור השמאלי</li><li>התמונה מודבקת שם, ונכנסת לכאן</li></ol></div></div><figcaption>${a.who.he} (${a.who.en}), ${a.who.role}. ${a.who.place}.</figcaption></figure>
+          <figure class="mirror"><div class="slot-frame" style="pointer-events:none;cursor:default" aria-hidden="true"><div class="how"><b>מקום לתמונה</b><ol><li>הפרומפט בכפתור, בטור השמאלי</li><li>התמונה או הסרטון מודבקים שם, ונכנסים לכאן</li></ol></div></div><figcaption>${a.who.he} (${a.who.en}), ${a.who.role}. ${a.who.place}.</figcaption></figure>
           <div class="box"><h3>${a.box.h}</h3>${a.box.items.map(t => `<p style="margin-top:4px">${t}</p>`).join("")}</div>
           <p style="margin-top:16px"><span class="insight">${a.insight}</span></p>
           <p class="haiku" style="margin-top:16px">${a.haiku.join("<br>")}</p>
