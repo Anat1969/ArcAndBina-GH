@@ -1,5 +1,5 @@
 /* מטמון פשוט: הדף תמיד מהרשת כשאפשר, תמונות וקבצי בנייה מהמטמון */
-const CACHE = "arcbina-v4";
+const CACHE = "arcbina-v5";
 
 self.addEventListener("install", e => self.skipWaiting());
 self.addEventListener("activate", e => {
