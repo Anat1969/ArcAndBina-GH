@@ -22,8 +22,28 @@ async function copy(text, msg = "הועתק") { try { await navigator.clipboard.
 
 /* ===== המסגרת הקבועה: עדשה, ושלושה טורים: הקשר, מוקד, הפקה ===== */
 let cleanups = [];
-function page({ role, kicker, title, sub, meta, right, focus, left, pager }) {
+function page({ role, kicker, title, sub, meta, right, focus, left, pager, layout }) {
   const R = ROLES[role];
+  /* מסמך (מאמר, כתבה, תדריך): פריסה לאורך. הגיליון 1:√2 בגובה המסך, והטורים שלצידו ברוחב הגיליון חלקי φ.
+     הכותרת עוברת לראש טור ההקשר, ולא לוקחת גובה מהגיליון. */
+  if (layout === "doc") {
+    app.innerHTML = `<div class="page doc${pager ? " has-pager" : ""}">
+      <aside class="dcol pr" aria-label="הקשר"><header class="dlens"><div class="kicker">${R ? `<span class="role">${R.step}</span>` : ""}${kicker}</div><h1>${title}</h1>${sub ? `<p class="sub">${sub}</p>` : ""}</header>${right}</aside>
+      <section class="dsheet pf" aria-label="מוקד">${focus}</section>
+      <aside class="dcol pl" aria-label="הפקה">${meta ? `<div class="dmeta">${meta}</div>` : ""}${left}</aside>
+      ${pager ? `<nav class="pager" aria-label="ניווט ברצף"><a class="btn" href="${pager.prev}">הקודם</a><span class="pg">${pager.label}</span><a class="btn" href="${pager.next}">הבא</a></nav>` : ""}</div>`;
+    cleanups.push(mountSlot(app, toast));
+    return;
+  }
+  /* רוחב (ציר זמן): הכותרת בשורה דקה, והמוקד לכל רוחב המסך */
+  if (layout === "wide" || layout === "split") {
+    app.innerHTML = `<div class="page wide ${layout}${pager ? " has-pager" : ""}">
+      <header class="wlens"><div class="kicker">${R ? `<span class="role">${R.step}</span>` : ""}${kicker}</div><h1>${title}</h1>${sub ? `<p class="sub">${sub}</p>` : ""}${meta ? `<div class="meta">${meta}</div>` : ""}</header>
+      ${layout === "split" ? `<div class="splitgrid"><section class="sp-main pf" aria-label="מוקד">${focus}</section><aside class="sp-side pl" aria-label="המשך">${left}</aside></div>` : focus}
+      ${pager ? `<nav class="pager" aria-label="ניווט ברצף"><a class="btn" href="${pager.prev}">הקודם</a><span class="pg">${pager.label}</span><a class="btn" href="${pager.next}">הבא</a></nav>` : ""}</div>`;
+    cleanups.push(mountSlot(app, toast));
+    return;
+  }
   app.innerHTML = `<div class="page${pager ? " has-pager" : ""}">
     <header class="lens"><div><div class="kicker">${R ? `<span class="role">${R.step}</span>` : ""}${kicker}</div><h1>${title}</h1>${sub ? `<p class="sub">${sub}</p>` : ""}</div>${meta ? `<div class="meta">${meta}</div>` : ""}</header>
     <div class="frame">
@@ -220,6 +240,7 @@ function brief(params) {
   const ch = prevBrief ? { c: prevBrief.c !== s.c, e: prevBrief.e !== s.e, g: prevBrief.g !== s.g } : {};
   prevBrief = s;
   page({
+    layout: "doc",
     role: "brief",
     kicker: ` · ${c.ashdod.site}`,
     title: `תדריך לכל מגרש: <b>שני לקוחות</b>, האדם וה<b style="color:${c.color}">${c.name}</b>`,
@@ -292,6 +313,7 @@ function article(id) {
   const c = byId(a.client);
   const post = `${a.title}\n${a.deck}\n\n${a.lead.replace(/<[^>]+>/g, "").replace(/\*\*/g, "")}\n\nתובנה: ${a.insight}\n\n${a.haiku.join("\n")}\n\nמקור: designboom, ${SOURCE.chapter}\n${a.url}`;
   page({
+    layout: "doc",
     role: "articles",
     kicker: ` · כתבה ${a.n} מתוך ${ARTICLES.length} · ${a.section}`,
     title: `כתבות: <b>השראה לחשיבה נוספת</b>`,
@@ -332,6 +354,7 @@ function discovery(d) {
   const insp = ARTICLES.filter(a => a.client === c.id);
   const post = `${c.insight}\n\nההברקה: ${FLASH[c.id]}\n\n${c.mechanism}\n\n${c.haiku.join("\n")}\n\nארק ובינה: ${BACK}/#/article/${d.id}`;
   page({
+    layout: "doc",
     role: "essays",
     kicker: ` · מאמר ${d.n} מתוך ${DISC.length} · ${c.name}`,
     title: `מאמרים: <b>מה גילינו כאן</b>`,
@@ -369,38 +392,81 @@ function discovery(d) {
   fitA4();
 }
 
-/* ===== מרעיון לחוק: הקשר. פס שנים שנגלל, ושלושה מסלולים ===== */
+/* ===== מרעיון לחוק: הקשר. ציר לרוחב המסך כולו, בלי גלילה ===== */
+/* סולם הזמן דחוס: כל אבן דרך מקבלת צעד, ועוד תוספת לפי לוגריתם של השנים שעברו מהקודמת.
+   כך 1864 עד 1949 נראה כפער אמיתי, ו-2004 עד 2026 לא נדחס לנקודה. */
+const LANE_KEYS = ["idea", "law", "built"];
+function timeScale(items) {
+  const w = items.map((t, i) => i ? 1 + 0.55 * Math.log1p(t.y - items[i - 1].y) : 0);
+  const cum = w.reduce((a, x, i) => (a.push((a[i - 1] || 0) + x), a), []);
+  const tot = cum.at(-1) + 4.2; /* מקום לאבן הדרך הבאה ("?") ולתווית שלה */
+  return { x: cum.map(c => (0.6 + c) / (tot + 0.6)), next: (0.6 + cum.at(-1) + 1.6) / (tot + 0.6) };
+}
 function timeline(params) {
   const sel = Math.min(TIMELINE.length - 1, Math.max(0, +(params.get("i") ?? TIMELINE.findIndex(t => t.y === 2017))));
   const t = TIMELINE[sel];
   const count = k => TIMELINE.filter(x => x.lane === k).length;
   const first = k => TIMELINE.find(x => x.lane === k && (k !== "law" || x.y > 2005)).y;
+  const X = timeScale(TIMELINE);
+  const pct = v => `${(v * 100).toFixed(2)}%`;
+  /* עשורים על הציר: רק אלה שיש בהם אבן דרך, כדי שהציר יישאר דחוס ונקי */
+  const yearsShown = TIMELINE.map((x, i) => ({ y: x.y, i })).filter((x, i, a) => !i || x.y !== a[i - 1].y);
   page({
+    layout: "wide",
     role: "timeline",
-    kicker: ` · ${TIMELINE[0].y} עד ${TIMELINE.at(-1).y}`,
+    kicker: ` · ${TIMELINE[0].y} עד ${TIMELINE.at(-1).y} · ${TIMELINE.length} אבני דרך`,
     title: "<b>הרעיון הגיע ראשון</b>, החוק אחריו, והבניין רק עכשיו.",
-    sub: `זכויות הטבע נכנסו לחוק מ-<b>${first("law")}</b>.<br>בניינים שמשרתים לקוח לא־אנושי מופיעים מ-<b>${first("built")}</b>.`,
-    meta: `${TIMELINE.length} אבני דרך`,
+    sub: `זכויות הטבע נכנסו לחוק מ-<b>${first("law")}</b>. בניינים שמשרתים לקוח לא־אנושי מופיעים מ-<b>${first("built")}</b>.`,
     pager: { prev: `#/timeline?i=${Math.max(0, sel - 1)}`, next: `#/timeline?i=${Math.min(TIMELINE.length - 1, sel + 1)}`, label: `${t.y} · ${sel + 1} מתוך ${TIMELINE.length}` },
-    right: ph("שלושה מסלולים") + Object.entries(LANES).map(([k, L]) => `<div class="lanecard" style="--c:${L.color}"><span class="n">${count(k)}</span><span><b>${L.name}</b><small>${{ idea: "ספר, מאמר, ועידה", law: "חוק, חוקה, מדיניות", built: "מבנה שנבנה" }[k]}</small></span></div>`).join("")
-      + why("גוללים את פס השנים בגלגלת או בגרירה. לחיצה על אבן דרך פותחת אותה משמאל."),
-    focus: `<div class="strip-wrap"><div class="strip-lanes">${Object.values(LANES).map(L => `<span style="color:${L.color}">${L.name}</span>`).join("")}</div>
-      <div class="strip" tabindex="0" aria-label="פס השנים">${TIMELINE.map((x, i) => `<a class="col${i === sel ? " on" : ""}" href="#/timeline?i=${i}" style="--c:${LANES[x.lane].color}">
-        <span class="yr">${x.y}</span>${["idea", "law", "built"].map(k => `<span class="lanecell">${x.lane === k ? `<span class="tcard"><b>${x.t.split(" (")[0]}</b><small>${x.d}</small></span>` : ""}</span>`).join("")}</a>`).join("")}
-        <a class="col next" href="#/lab"><span class="yr">?</span><span class="lanecell"></span><span class="lanecell"></span><span class="lanecell"><span class="tcard"><b>הבניין הבא שלך</b><small>למעבדה</small></span></span></a>
-      </div></div>`,
-    left: ph("אבן הדרך", LANES[t.lane].name) + `<div class="card tdetail fix-l" style="--c:${LANES[t.lane].color}"><span class="ty">${t.y}</span><h3>${t.t}</h3><p>${md(t.d)}</p></div>`
-      + `<div class="card fix-m"><span class="lbl">מה זה אומר לנו · פרשנות</span><p><mark>${t.so}</mark></p></div>`
-      + ph("הצעד הבא") + `<div class="stack"><a class="btn primary" href="#/lab">מי הלקוח של 2026? למעבדה</a><a class="btn" href="#/article/planet-in-the-room">כתבת הפתיחה של הפרק</a></div>`,
+    focus: `<section class="tl" aria-label="שלושה מסלולים על ציר אחד">
+      <div class="tl-key">${LANE_KEYS.map(k => `<span class="tl-name" style="--c:${LANES[k].color}"><b>${LANES[k].name}</b><small>${count(k)} · ${{ idea: "ספר, מאמר, ועידה", law: "חוק, חוקה, מדיניות", built: "מבנה שנבנה" }[k]}</small></span>`).join("")}<span class="tl-axisname">שנה</span></div>
+      <div class="tl-field">
+        <div class="tl-sel" style="--x:${pct(X.x[sel])};--c:${LANES[t.lane].color}"></div>
+        ${LANE_KEYS.map(k => `<div class="tl-lane" data-lane="${k}" style="--c:${LANES[k].color}">${TIMELINE.map((x, i) => x.lane !== k ? "" :
+          `<a class="tl-ev${i === sel ? " on" : ""}" href="#/timeline?i=${i}" style="--x:${pct(X.x[i])}" title="${x.y}: ${x.t.replace(/"/g, "&quot;")}"><i></i><span>${x.t.split(" (")[0].split(",")[0]}</span></a>`).join("")}
+          ${k === "built" ? `<a class="tl-ev next" href="#/lab" style="--x:${pct(X.next)}"><i></i><span>הבניין הבא שלך</span></a>` : ""}</div>`).join("")}
+        <div class="tl-axis">${yearsShown.map(x => `<a href="#/timeline?i=${x.i}" class="${TIMELINE[sel].y === x.y ? "on" : ""}" style="--x:${pct(X.x[x.i])}">${x.y}</a>`).join("")}<a class="nx" href="#/lab" style="--x:${pct(X.next)}">?</a></div>
+      </div>
+      <p class="tl-how">${md("המרחק בין אבני הדרך **דחוס**: צעד קבוע לכל אחת, ועוד תוספת לפי מספר השנים שעברו. הזמן זורם מימין לשמאל.")}</p>
+    </section>
+    <section class="tl-detail" style="--c:${LANES[t.lane].color}" aria-label="אבן הדרך">
+      <div class="td-year"><span class="lbl">${LANES[t.lane].name}</span><span class="ty">${t.y}</span></div>
+      <div class="td-main"><h2>${t.t}</h2><p>${md(t.d)}</p></div>
+      <div class="td-so"><span class="lbl">מה זה אומר לנו · פרשנות</span><p><mark>${t.so}</mark></p>
+        <div class="line"><a class="btn primary" href="#/lab">מי הלקוח של 2026? למעבדה</a><a class="btn" href="#/article/planet-in-the-room">כתבת הפתיחה</a></div></div>
+    </section>`,
   });
-  const strip = app.querySelector(".strip");
-  strip.querySelector(".col.on")?.scrollIntoView({ inline: "center", block: "nearest" });
-  strip.addEventListener("wheel", e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { strip.scrollLeft -= e.deltaY; e.preventDefault(); } }, { passive: false });
-  let drag = null;
-  strip.addEventListener("pointerdown", e => { drag = { x: e.clientX, l: strip.scrollLeft, moved: false }; });
-  strip.addEventListener("pointermove", e => { if (!drag) return; const dx = e.clientX - drag.x; if (Math.abs(dx) > 4) { drag.moved = true; strip.scrollLeft = drag.l - dx; } });
-  addEventListener("pointerup", () => setTimeout(() => { drag = null; }, 0), { once: true });
-  strip.addEventListener("click", e => { if (drag?.moved) e.preventDefault(); }, true);
+  stackLabels();
+  const ro = new ResizeObserver(() => stackLabels()); ro.observe(app.querySelector(".tl-field")); cleanups.push(() => ro.disconnect());
+}
+/* תוויות בלי חפיפה: בכל מסלול, תווית עולה לשורה הבאה כשהיא נוגעת בקודמת. גובה המסלול לפי מספר השורות */
+function stackLabels() {
+  const field = app.querySelector(".tl-field"); if (!field) return;
+  const fl = field.getBoundingClientRect().left;
+  app.querySelectorAll(".tl-lane").forEach(lane => {
+    const rows = []; /* לכל שורה: הקצה השמאלי של התווית האחרונה (בציר מימין לשמאל) */
+    [...lane.querySelectorAll(".tl-ev")].forEach(ev => {
+      ev.style.setProperty("--row", 0); ev.classList.remove("flip");
+      let r = ev.querySelector("span").getBoundingClientRect(), dot = ev.querySelector("i").getBoundingClientRect();
+      /* תווית שיוצאת מקצה הציר עוברת לצד השני של הנקודה */
+      if (dot.left - r.width - 8 < fl) { ev.classList.add("flip"); r = ev.querySelector("span").getBoundingClientRect(); }
+      const right = ev.classList.contains("flip") ? r.right + 4 : dot.right, left = ev.classList.contains("flip") ? dot.left : right - r.width - 12;
+      let row = rows.findIndex(edge => right < edge - 6);
+      if (row < 0) { row = rows.length; rows.push(left); } else rows[row] = left;
+      ev.style.setProperty("--row", row);
+    });
+    lane.style.setProperty("--rows", Math.max(1, rows.length));
+  });
+  /* שנים צמודות על הציר: אחת עולה לשורה שנייה */
+  let edge = Infinity;
+  app.querySelectorAll(".tl-axis a").forEach(a => {
+    a.classList.remove("low");
+    const r = a.getBoundingClientRect();
+    if (r.right > edge - 4) a.classList.add("low"); else edge = r.left;
+  });
+  /* בנייד הציר נגלל: מביאים את אבן הדרך הנבחרת למרכז */
+  const tl = app.querySelector(".tl"), on = app.querySelector(".tl-ev.on");
+  if (tl && on && tl.scrollWidth > tl.clientWidth) tl.scrollLeft += on.getBoundingClientRect().left - tl.getBoundingClientRect().left - tl.clientWidth / 2;
 }
 
 /* ===== הרשת: המשך. אפליקציות בשורות, לקוחות בעמודות ===== */
@@ -410,6 +476,7 @@ function network(params) {
   const selA = keys.includes(params.get("a")) ? params.get("a") : bridgesOf(selC)[0];
   const exact = Object.values(BRIDGES).filter(b => b.exact).length;
   page({
+    layout: "split",
     role: "network",
     pager: { prev: `#/network?c=${nextOf(CLIENTS, CLIENTS.indexOf(selC), -1).id}`, next: `#/network?c=${nextOf(CLIENTS, CLIENTS.indexOf(selC), 1).id}`, label: selC.name },
     kicker: ` · ${keys.length} אפליקציות × ${CLIENTS.length} לקוחות`,

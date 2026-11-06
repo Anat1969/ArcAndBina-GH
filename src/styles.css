@@ -463,3 +463,118 @@ main{outline:none}
   .a4wrap{display:block;width:210mm;height:296mm;overflow:hidden}
   .sheet.a4{width:210mm;height:296mm;page-break-after:avoid;break-after:avoid}
 }
+
+/* ===== סבב 5: פרופורציות. בלי חלוקה קבועה לשלושה ===== */
+/* מתוך מד הפרופורציות: גיליון A4 הוא יחס פלאדיו 1:√2. הטורים שלצידו = רוחב הגיליון חלקי φ (1.618).
+   רווחים מסדרת רנאר R10: 8, 16, 25, 40. */
+:root{--phi:1.618;--r8:8px;--r16:16px;--r25:25px;--r40:40px}
+
+/* מסמך לאורך: מאמר, כתבה, תדריך */
+.page.doc{--H:calc(100dvh - var(--nav-h) - var(--r16) - 68px);--S:min(calc(var(--H) / 1.41421), 794px);
+  --side:min(calc(var(--S) / var(--phi)), calc((100vw - var(--S) - 2 * var(--pad) - 2 * var(--r40)) / 2));
+  display:grid;grid-template-rows:minmax(0,1fr);grid-template-columns:var(--side) var(--S) var(--side);column-gap:var(--r40);justify-content:center;
+  max-width:none;padding:var(--r16) var(--pad) 68px}
+.page.doc .dsheet{display:flex;flex-direction:column;min-height:0;height:var(--H)}
+.page.doc .dcol{min-height:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:var(--r16);scrollbar-width:thin;padding:0 2px var(--r8)}
+.page.doc .dcol > .ph{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);display:flex;justify-content:space-between;gap:8px;flex:none;
+  border-top:1px solid var(--rule);padding-top:var(--r8)}
+.dlens{flex:none;display:flex;flex-direction:column;gap:6px;padding-bottom:var(--r8)}
+.dlens h1{font-size:22px;font-weight:300;line-height:1.25}
+.dlens h1 b{font-weight:600}
+.dlens .sub{font-size:13.5px;color:var(--ink-2);line-height:1.5}
+.dmeta{font-family:var(--mono);font-size:12px;color:var(--ink-3);line-height:1.6;flex:none}
+/* בלי קופסאות: קו דק מפריד, והטקסט נושם */
+.page.doc .card{background:none;box-shadow:none;padding:var(--r8) 0 0;border-top:1px solid var(--rule)}
+.page.doc .card.meaning{border-inline-start:0;border-top:2px solid var(--living);height:auto;padding-top:var(--r8)}
+.page.doc .fix-s{height:auto;overflow:visible}
+.page.doc .slot.compact .slot-frame{aspect-ratio:1.41421;height:auto}
+.page.doc .slot.compact .slot-actions .line{grid-template-columns:minmax(0,1fr);display:grid}
+.page.doc .slot.compact .slot-actions .line .btn{width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* רוחב: ציר הזמן לכל המסך */
+.page.wide{overflow-x:clip;display:flex;flex-direction:column;gap:var(--r25);max-width:none;height:auto;min-height:calc(100dvh - var(--nav-h));padding:var(--r16) var(--pad) 84px}
+.wlens{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px var(--r25);align-items:end}
+.wlens .kicker{grid-column:1/-1;margin:0}
+.wlens h1{font-size:clamp(24px,2.3vw,34px);font-weight:300}
+.wlens h1 b{font-weight:600}
+.wlens .sub{font-size:14.5px;color:var(--ink-2);grid-column:1/-1}
+.tl{display:grid;grid-template-columns:150px minmax(0,1fr);column-gap:var(--r25);row-gap:var(--r8)}
+.tl-key{display:grid;grid-template-rows:subgrid;grid-row:1/span 4}
+.tl-field{position:relative;display:grid;grid-template-rows:subgrid;grid-row:1/span 4}
+.tl-name{display:flex;flex-direction:column;justify-content:center;border-inline-start:3px solid var(--c);padding-inline-start:10px}
+.tl-name b{font-size:15px;color:var(--c)}
+.tl-name small{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.tl-axisname{font-family:var(--mono);font-size:11px;color:var(--ink-3);align-self:center;padding-inline-start:13px}
+.tl-lane{position:relative;height:calc(var(--rows,1) * 26px + 12px);border-top:1px solid var(--rule)}
+.tl-lane::before{content:"";position:absolute;inset-inline:0;top:12px;height:1px;background:color-mix(in srgb,var(--c) 35%,transparent)}
+.tl-ev{position:absolute;inset-inline-start:var(--x);top:calc(var(--row,0) * 26px + 6px);display:flex;align-items:center;gap:5px;margin-inline-start:-5px;
+  text-decoration:none;color:var(--ink);white-space:nowrap;font-size:13px;line-height:14px}
+.tl-ev i{width:10px;height:10px;flex:none;background:var(--c);box-shadow:0 0 0 2px var(--paper)}
+.tl-ev span{padding:1px 3px}
+.tl-ev:hover span{background:color-mix(in srgb,var(--c) 14%,white)}
+.tl-ev.on span{background:var(--c);color:#fff;font-weight:600}
+.tl-ev.on i{transform:scale(1.4)}
+.tl-ev.next i{background:none;box-shadow:inset 0 0 0 2px var(--living)}
+.tl-ev.next span{color:var(--living);font-weight:600}
+.tl-sel{position:absolute;inset-block:0 -6px;inset-inline-start:var(--x);width:2px;margin-inline-start:-1px;background:var(--c);opacity:.5;pointer-events:none}
+.tl-axis{position:relative;height:44px;border-top:2px solid var(--ink)}
+.tl-axis a{position:absolute;inset-inline-start:var(--x);top:4px;transform:translateX(50%);font-family:var(--mono);font-size:12px;color:var(--ink-3);text-decoration:none}
+.tl-axis a.on{color:var(--ink);font-weight:600;font-size:14px}
+.tl-axis a.nx{color:var(--living);font-weight:600}
+.tl-how{grid-column:2;font-size:12.5px;color:var(--ink-3)}
+/* הפרט הנבחר: שלושה חלקים ביחס הזהב, 1 : φ : 1, בלי קופסה */
+.tl-detail{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.618fr) minmax(0,1.618fr);gap:var(--r40);border-top:3px solid var(--c);padding-top:var(--r16)}
+.td-year{display:flex;flex-direction:column;gap:4px}
+.td-year .ty{font-family:var(--mono);font-size:clamp(56px,6.2vw,96px);line-height:1;color:var(--c);font-weight:500}
+.td-main h2{font-size:24px;font-weight:600;margin-bottom:var(--r8)}
+.td-main p,.td-so p{font-size:15px;line-height:1.65}
+.td-so{display:flex;flex-direction:column;gap:var(--r8)}
+.td-so .line{margin-top:var(--r8)}
+
+@media (max-width:1100px){
+  .page.doc{display:flex;flex-direction:column;height:auto;padding-bottom:84px}
+  .page.doc .dsheet{height:auto}
+  .page.doc .dcol{overflow:visible}
+  .tl-detail{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:700px){
+  .tl{display:block;overflow-x:auto;scrollbar-width:thin;padding-bottom:var(--r8)}
+  .tl-key{display:none}
+  .tl-field{display:block;width:1000px}
+  .tl-how{position:sticky;right:0;width:calc(100vw - 2 * var(--pad));margin-top:var(--r8)}
+}
+@media print{
+  .page.doc,.page.doc .dsheet{display:block!important;height:auto!important;padding:0!important}
+  .page.doc .dcol,.dlens{display:none!important}
+}
+.tl-ev.flip{flex-direction:row-reverse}
+.tl-ev.flip i{order:0}
+.tl-ev.flip{margin-inline-start:0;transform:translateX(calc(100% - 5px))}
+@media (min-width:701px) and (max-height:800px){
+  .page.wide{gap:var(--r16);padding-top:var(--r8)}
+  .wlens h1{font-size:24px}
+  .tl-lane{height:calc(var(--rows,1) * 22px + 8px)}
+  .tl-ev{top:calc(var(--row,0) * 22px + 4px);font-size:12.5px}
+  .td-year .ty{font-size:56px}
+  .td-main h2{font-size:20px}
+  .td-main p,.td-so p{font-size:14px}
+  .tl-how{display:none}
+}
+
+.tl-axis a.low{top:22px}
+/* טבלה לרוחב: הטבלה ברוחב φ, וההמשך ברוחב 1. הלקוחות הם ראשי הטורים, בלי בורר כפול */
+.page.split{height:calc(100dvh - var(--nav-h));min-height:0}
+.splitgrid{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.618fr) minmax(0,1fr);gap:var(--r40)}
+.sp-main,.sp-side{min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:var(--r16);scrollbar-width:thin}
+.sp-side > .ph,.sp-main > .ph{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);display:flex;justify-content:space-between;border-top:1px solid var(--rule);padding-top:var(--r8);flex:none}
+.page.split .matrix.net{background:none;box-shadow:none;padding:0;flex:none}
+.page.split .matrix.net th.rowh,.page.split .matrix.net td{padding-block:2px}
+.page.split .matrix.net .cell{height:26px}
+.page.split .card{background:none;box-shadow:none;padding:var(--r8) 0 0;border-top:1px solid var(--rule)}
+@media (max-width:1100px){.page.split{height:auto}.splitgrid{grid-template-columns:minmax(0,1fr)}.sp-main,.sp-side{overflow:visible}}
+.wlens .meta{grid-column:2;grid-row:2;font-family:var(--mono);font-size:12px;color:var(--ink-3);text-align:end;line-height:1.5}
+.page.split .matrix.net th.rowh{white-space:nowrap}
+.page.split .matrix.net th.rowh small{display:inline;margin-inline-start:8px}
+.page.split .matrix.net .cell{height:24px}
+.page.split .fix-b{height:auto}
+.page.split .fix-b .ans{flex:none}
