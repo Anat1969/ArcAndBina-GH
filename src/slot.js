@@ -16,20 +16,21 @@ export function slotHTML(slot, p, title = "התמונה", opt = {}) {
   const cls = opt.compact ? " compact" : opt.mid ? " mid" : "";
   return `<div class="slot${cls}" data-slot="${slot}">
     <div class="slot-frame" tabindex="0" role="button" aria-label="מסגרת ${title}: הדבקה, גרירה או בחירת קובץ">
-      <div class="how"><b>${opt.compact ? "הדבקה כאן" : "כאן מדביקים תמונה או סרטון"}</b>
-        <ol><li>העתקת הפרומפט בכפתור למטה</li><li>יצירה במידג'רני: תמונה, או סרטון מהתמונה</li><li>חזרה לכאן: Ctrl+V לתמונה, גרירה או לחיצה על המסגרת לתמונה ולסרטון</li></ol>
+      <div class="how"><b>${opt.compact ? "הדבקה כאן" : opt.search ? "כאן מדביקים צילום של הדוגמה" : "כאן מדביקים תמונה או סרטון"}</b>
+        ${opt.search ? `<ol><li>חיפוש צילום בכפתור למטה (רישיון חופשי)</li><li>העתקת התמונה, וחזרה לכאן: Ctrl+V, גרירה או לחיצה</li></ol>`
+          : `<ol><li>העתקת הפרומפט בכפתור למטה</li><li>יצירה במידג'רני: תמונה, או סרטון מהתמונה</li><li>חזרה לכאן: Ctrl+V לתמונה, גרירה או לחיצה על המסגרת לתמונה ולסרטון</li></ol>`}
       </div>
       <input type="file" accept="${ACCEPT}" hidden>
     </div>
     <div class="thumbs"></div>
-    <p class="distill">${p.distill}</p>
-    <div class="stack slot-actions">
+    ${opt.search ? "" : `<p class="distill">${p.distill}</p>`}
+    ${opt.search ? `<div class="line slot-actions"><a class="btn primary" href="${opt.search}" target="_blank" rel="noopener">חיפוש צילום</a><button class="btn" data-pick>בחירת קובץ</button></div>` : `<div class="stack slot-actions">
       <button class="btn primary" data-copy="${encodeURIComponent(p.prompt)}" title="${p.prompt.replace(/"/g, "&quot;")}">העתקת הפרומפט</button>
       <div class="line">
         <a class="btn" href="https://www.midjourney.com/imagine" target="_blank" rel="noopener">פתיחת מידג'רני</a>
         <button class="btn" data-pick>תמונה או סרטון</button>
       </div>
-    </div>
+    </div>`}
   </div>`;
 }
 
@@ -57,7 +58,7 @@ export function mountSlot(root, toast) {
   if (!el) return () => {};
   const slot = el.dataset.slot;
   const frame = el.querySelector(".slot-frame"), input = el.querySelector("input[type=file]"), thumbs = el.querySelector(".thumbs");
-  const prompt = decodeURIComponent(el.querySelector("[data-copy]").dataset.copy);
+  const prompt = decodeURIComponent(el.querySelector("[data-copy]")?.dataset.copy || el.dataset.slot);
   const how = frame.querySelector(".how");
   let paths = [];
 
