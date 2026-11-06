@@ -22,35 +22,38 @@ async function copy(text, msg = "הועתק") { try { await navigator.clipboard.
 
 /* ===== המסגרת הקבועה: עדשה, ושלושה טורים: הקשר, מוקד, הפקה ===== */
 let cleanups = [];
-function page({ role, kicker, title, sub, meta, right, focus, left, pager, layout }) {
+function page({ role, kicker, title, sub, meta, right, focus, left, pager, layout, cls = "" }) {
   const R = ROLES[role];
+  /* "הקודם" ו"הבא" בסרגל העליון, באותו מקום בכל דף, ולא על שטח התוכן */
+  const slot = document.getElementById("pagerslot");
+  if (slot) slot.innerHTML = pager ? `<nav class="pager" aria-label="ניווט ברצף"><a class="btn" href="${pager.prev}">הקודם</a><span class="pg">${pager.label}</span><a class="btn" href="${pager.next}">הבא</a></nav>` : "";
   /* מסמך (מאמר, כתבה, תדריך): פריסה לאורך. הגיליון 1:√2 בגובה המסך, והטורים שלצידו ברוחב הגיליון חלקי φ.
      הכותרת עוברת לראש טור ההקשר, ולא לוקחת גובה מהגיליון. */
   if (layout === "doc") {
-    app.innerHTML = `<div class="page doc${pager ? " has-pager" : ""}">
+    app.innerHTML = `<div class="page doc">
       <aside class="dcol pr" aria-label="הקשר"><header class="dlens"><div class="kicker">${R ? `<span class="role">${R.step}</span>` : ""}${kicker}</div><h1>${title}</h1>${sub ? `<p class="sub">${sub}</p>` : ""}</header>${right}</aside>
       <section class="dsheet pf" aria-label="מוקד">${focus}</section>
       <aside class="dcol pl" aria-label="הפקה">${meta ? `<div class="dmeta">${meta}</div>` : ""}${left}</aside>
-      ${pager ? `<nav class="pager" aria-label="ניווט ברצף"><a class="btn" href="${pager.prev}">הקודם</a><span class="pg">${pager.label}</span><a class="btn" href="${pager.next}">הבא</a></nav>` : ""}</div>`;
+      </div>`;
     cleanups.push(mountSlot(app, toast));
     return;
   }
   /* רוחב (ציר זמן): הכותרת בשורה דקה, והמוקד לכל רוחב המסך */
   if (layout === "wide" || layout === "split") {
-    app.innerHTML = `<div class="page wide ${layout}${pager ? " has-pager" : ""}">
+    app.innerHTML = `<div class="page wide ${layout} ${cls}">
       <header class="wlens"><div class="kicker">${R ? `<span class="role">${R.step}</span>` : ""}${kicker}</div><h1>${title}</h1>${sub ? `<p class="sub">${sub}</p>` : ""}${meta ? `<div class="meta">${meta}</div>` : ""}</header>
       ${layout === "split" ? `<div class="splitgrid"><section class="sp-main pf" aria-label="מוקד">${focus}</section><aside class="sp-side pl" aria-label="המשך">${left}</aside></div>` : focus}
-      ${pager ? `<nav class="pager" aria-label="ניווט ברצף"><a class="btn" href="${pager.prev}">הקודם</a><span class="pg">${pager.label}</span><a class="btn" href="${pager.next}">הבא</a></nav>` : ""}</div>`;
+      </div>`;
     cleanups.push(mountSlot(app, toast));
     return;
   }
-  app.innerHTML = `<div class="page${pager ? " has-pager" : ""}">
+  app.innerHTML = `<div class="page ${cls}">
     <header class="lens"><div><div class="kicker">${R ? `<span class="role">${R.step}</span>` : ""}${kicker}</div><h1>${title}</h1>${sub ? `<p class="sub">${sub}</p>` : ""}</div>${meta ? `<div class="meta">${meta}</div>` : ""}</header>
     <div class="frame">
       <aside class="pane side pr" aria-label="הקשר">${right}</aside>
       <section class="pane focus pf" aria-label="מוקד">${focus}</section>
       <aside class="pane side pl" aria-label="הפקה">${left}</aside>
-    </div>${pager ? `<nav class="pager" aria-label="ניווט ברצף"><a class="btn" href="${pager.prev}">הקודם</a><span class="pg">${pager.label}</span><a class="btn" href="${pager.next}">הבא</a></nav>` : ""}</div>`;
+    </div></div>`;
   cleanups.push(mountSlot(app, toast));
 }
 const ph = (a, b = "") => `<div class="ph"><span>${a}</span><span>${b}</span></div>`;
@@ -96,6 +99,14 @@ function bridgeCard(c, key, on) {
   </div>`;
 }
 
+/* גשר מקוצר: כל הכרטיס הוא קישור. השדרוג המוצע מופיע ברשת */
+function bridgeMini(c, key) {
+  const b = BRIDGES[`${c.id}:${key}`], a = APPS[key];
+  if (!b) return "";
+  return `<a class="bmini" style="--c:${c.color}" href="${bridgeUrl(b, c)}" target="_blank" rel="noopener" title="${b.answer.replace(/<[^>]+>|\*\*/g, "").replace(/"/g, "&quot;")}">
+    <span class="to">${a.name} · ${b.exact ? "פריט מדויק" : "הקרוב ביותר"}</span><b>${b.item}</b><span class="ans">${md(b.answer)}</span></a>`;
+}
+
 /* ===== דף הבית ===== */
 function home() {
   const steps = [
@@ -112,11 +123,17 @@ function home() {
     title: "<b>הלקוח השתנה.</b> האדריכלות מתכננת גם לנהר, לאצה, לתולעת ולזרע.",
     sub: `הפרק <b>${SOURCE.chapter}</b> של designboom הופך כאן לכלי עבודה: <mark>הבנה, גילוי, יישום וסיכום</mark>, לכל לקוח חדש.`,
     right: ph("המסלול", "7 דפים, 7 תפקידים") + steps.map(([r, n, u, p, href]) => `<a class="step" href="${href}"><span class="n">${n}</span><span><h3>${ROLES[r].step}: ${u}</h3><p>${p}</p></span></a>`).join(""),
-    focus: ph("מכונת הגרדיאנט", "גרירה לסיבוב") + `<div class="machine">
-      <div class="hud"><div class="lvl" id="lvl"></div><p id="lvlline"></p></div>
+    focus: ph("מכונת הגרדיאנט", "גרירה לסיבוב · הפעלה לסרטון המעבר") + `<div class="machine">
+      <div class="hud"><div class="lvl" id="lvl"></div><p id="lvlline"></p><button class="btn primary play" id="play" aria-pressed="false">הפעלת המעבר</button></div>
       <canvas id="gl" aria-label="גוש בניין שנפתח מ-0, מרחב מחוטא, עד 1, מרחב חי"></canvas>
-      <div class="slider"><span class="lbl">0 · מחוטא</span><input id="g" type="range" min="0" max="1" step="0.01" value="0.5" aria-label="הגרדיאנט בין מרחב מחוטא למרחב חי"><span class="lbl">1 · חי</span></div>
-      <div class="bars" id="bars"></div></div>`,
+      <div class="gbar" id="gbar">
+        <div class="gtrack"></div>
+        ${GRADIENT.map((L, i) => `<button class="gstop" data-v="${L.v}" style="--x:${L.v * 100}%" title="${L.name}"><i></i><span>${L.v}</span><small>${L.name.replace("מרחב ", "")}</small></button>`).join("")}
+        <div class="gunit" id="gunit"></div><b class="gtag" id="gval"></b>
+        <input id="g" type="range" min="0" max="1" step="any" value="0" aria-label="הגרדיאנט בין מרחב מחוטא (0) למרחב חי (1)">
+      </div>
+      <div class="bars" id="bars"></div>
+      <p class="gnote" id="gnote">${md("**איך קוראים:** היחידה זזה ממחוטא לחי, ועוצרת בכל אחד מחמשת השלבים כדי שאפשר יהיה לקרוא את הנתונים. גרירה של היחידה עוצרת את הסרטון.")}</p></div>`,
     left: ph("בעיה, פתרון, תובנה") + `<div class="psi">
       <div class="p"><span class="t">בעיה</span><b>מידה אחת, לקוח אחד</b>מוויטרוביוס ועד המודולור, כל מידה נגזרה מגוף האדם.</div>
       <div class="s"><span class="t">פתרון</span><b>גרדיאנט במקום גבול</b>כל תכונה של האתר על רצף 0 עד 1: פוריות, לחות, אור.</div>
@@ -125,19 +142,59 @@ function home() {
   });
   const input = $("#g");
   let machine;
-  const show = () => {
+  /* בין שני שלבים: ערך ביניים. על שלב: בדיוק הנתון של השלב */
+  const lerp = (k, g) => {
+    const i = Math.min(GRADIENT.length - 2, Math.floor(g * (GRADIENT.length - 1) + 1e-9)), A = GRADIENT[i], B = GRADIENT[i + 1];
+    return Math.round(A[k] + (B[k] - A[k]) * ((g - A.v) / (B.v - A.v)));
+  };
+  const show = (stopAt = null) => {
     const g = +input.value, L = level(g);
     $("#lvl").innerHTML = `<b>${g.toFixed(2)}</b>${L.name}`;
     $("#lvlline").textContent = L.line;
-    const lerp = k => Math.round(GRADIENT[0][k] + (GRADIENT[4][k] - GRADIENT[0][k]) * g);
-    $("#bars").innerHTML = [["נקבוביות", lerp("porosity"), "%", 75], ["לחות קרקע", lerp("moisture"), "%", 80], ["מינים באתר", lerp("species"), "", 40]]
+    $("#gunit").style.setProperty("--x", `${g * 100}%`);
+    /* התווית לא יוצאת מהפס: בקצוות היא נצמדת פנימה */
+    $("#gval").style.setProperty("--x", `${g * 100}%`);
+    $("#gval").style.setProperty("--tx", g < .15 ? "0%" : g > .85 ? "100%" : "50%");
+    $("#gval").textContent = `חי ${Math.round(g * 100)}% · מחוטא ${100 - Math.round(g * 100)}%`;
+    app.querySelectorAll(".gstop").forEach(b => b.classList.toggle("on", +b.dataset.v === L.v && Math.abs(g - L.v) < .005));
+    $("#bars").classList.toggle("stop", stopAt !== null);
+    $("#bars").innerHTML = (stopAt !== null ? `<div class="stoph"><span class="lbl">שלב ${GRADIENT.indexOf(stopAt) + 1} מתוך ${GRADIENT.length}</span><b>${stopAt.v} · ${stopAt.name}</b></div>` : "")
+      + [["נקבוביות המעטפת", lerp("porosity", g), "%", 75], ["לחות קרקע", lerp("moisture", g), "%", 80], ["מינים באתר", lerp("species", g), "", 40]]
       .map(([n, v, u, max]) => `<div class="bar"><div class="lbl">${n}</div><div class="num">${v}${u}</div><div class="track"><div class="fill" style="width:${v / max * 100}%"></div></div></div>`).join("");
     machine?.set(g);
   };
+  /* סרטון המעבר: היחידה נעה מ-0 ל-1, ועוצרת בכל שלב כדי לקרוא את הנתונים */
+  const btn = $("#play"), HOLD = 1600, SPEED = 0.16;
+  let raf = 0, hold = 0, playing = false, last = 0, cur = 0;
+  const stop = () => { playing = false; cancelAnimationFrame(raf); clearTimeout(hold); btn.textContent = "הפעלת המעבר"; btn.setAttribute("aria-pressed", "false"); };
+  const tick = t => {
+    if (!playing) return;
+    const dt = last ? (t - last) / 1000 : 0; last = t;
+    /* המיקום נשמר כמספר, לא דרך הפס, כדי שעיגול לא ידלג על שלב */
+    const g0 = cur, g1 = Math.min(1, g0 + dt * SPEED);
+    const nxt = GRADIENT.find(L => L.v > g0 + 1e-6 && L.v <= g1 + 1e-6);
+    if (nxt) {
+      cur = nxt.v; input.value = cur; show(nxt);
+      if (nxt.v >= 1) { stop(); return; }
+      hold = setTimeout(() => { last = 0; raf = requestAnimationFrame(tick); }, HOLD);
+      return;
+    }
+    cur = g1; input.value = cur; show(); raf = requestAnimationFrame(tick);
+  };
+  const play = () => {
+    cur = +input.value >= 0.999 ? 0 : +input.value; input.value = cur;
+    playing = true; last = 0; btn.textContent = "עצירה"; btn.setAttribute("aria-pressed", "true");
+    const here = GRADIENT.find(L => Math.abs(L.v - cur) < .005);
+    show(here || null);
+    hold = setTimeout(() => { raf = requestAnimationFrame(tick); }, here ? HOLD : 0);
+  };
+  btn.addEventListener("click", () => playing ? stop() : play());
+  app.querySelectorAll(".gstop").forEach(b => b.addEventListener("click", () => { stop(); input.value = b.dataset.v; show(GRADIENT.find(L => L.v === +b.dataset.v)); }));
+  cleanups.push(stop);
   import("./gradient3d.js").then(m => { if (!$("#gl")) return; machine = m.mountGradient($("#gl")); show(); cleanups.push(() => machine.destroy()); })
     .catch(() => $("#gl")?.replaceWith(Object.assign(document.createElement("div"), { className: "gradscale" })));
-  input.addEventListener("input", show);
-  show();
+  input.addEventListener("input", () => { stop(); show(); });
+  show(GRADIENT[0]);
 }
 
 /* ===== הלקוחות: הבנה. המוקד הוא החתך ===== */
@@ -152,16 +209,17 @@ function client(id) {
     title: `<b>${c.insight}</b>`,
     sub: c.mechanism,
     meta: `צריך: ${c.need}<br>נותן: ${c.gives}`,
+    cls: "pg-client",
     right: ph("הלקוחות") + clientStack(c.id, x => `#/client/${x.id}`)
-      + `<div class="card fix-l"><span class="lbl">ידע</span><p class="fact">${md(c.fact)}</p><div class="src">${c.source}</div></div>
-         <div class="card fix-m"><span class="lbl">תקדים</span><p class="fact">${md(c.precedent)}</p></div>`,
-    focus: ph("המנגנון בחתך", c.ashdod.site) + sectionSVG(c)
-      + `<div class="two"><div class="card fix-xl" style="--c:${c.color}"><span class="lbl">ארבעה מהלכי תכנון</span><div class="moves">${ELEMENTS.map(e => `<div class="move"><span class="el">${e.name}</span><span>${c.moves[e.id]}</span></div>`).join("")}</div></div>
-         <div class="stack" style="align-content:start;gap:12px"><div class="ashdod fix-m"><span class="lbl">דוגמה מהעיר</span><h3>${c.ashdod.site}</h3><p style="margin-top:6px">${md(c.ashdod.line)}</p></div>
-         <div class="card flashcard fix-s"><span class="lbl">ההברקה</span><p><mark>${FLASH[c.id]}</mark></p></div></div></div>`,
-    left: ph("תמונה") + slotHTML(`img:${c.id}:facade`, buildPrompt(c, "facade", .75), c.name, { mid: true })
-      + `<div class="stack"><a class="btn primary" href="#/article/d-${c.id}">המאמר</a><a class="btn" href="#/lab?c=${c.id}">למעבדה</a><a class="btn" href="#/brief?c=${c.id}&e=ground&g=0.75">תדריך</a>${arts.map(a => `<a class="btn" href="#/article/${a.id}"><span>כתבה: ${a.title}</span></a>`).join("")}</div>`
-      + ph("המשך החקירה") + `<p class="why">${md(c.question)}</p>` + bridgesOf(c).map(k => bridgeCard(c, k)).join(""),
+      + `<div class="note"><span class="lbl">ידע</span><p class="fact">${md(c.fact)}</p><div class="src">${c.source}</div></div>
+         <div class="note"><span class="lbl">תקדים</span><p class="fact">${md(c.precedent)}</p></div>`,
+    focus: ph("המנגנון בחתך", c.ashdod.site) + `<div class="secwrap">${sectionSVG(c)}</div>`
+      + `<div class="moves4" style="--c:${c.color}">${ELEMENTS.map(e => `<div class="m4"><span class="el">${e.name}</span><span>${c.moves[e.id]}</span></div>`).join("")}</div>
+         <div class="cl-row"><div class="ashdod"><span class="lbl">דוגמה מהעיר</span><h3>${c.ashdod.site}</h3><p>${md(c.ashdod.line)}</p></div>
+         <div class="flashnote"><span class="lbl">ההברקה · רעיון, לא עובדה</span><p><mark>${FLASH[c.id]}</mark></p></div></div>`,
+    left: ph("תמונה") + slotHTML(`img:${c.id}:facade`, buildPrompt(c, "facade", .75), c.name, { compact: true })
+      + `<div class="grid2"><a class="btn primary" href="#/article/d-${c.id}">המאמר</a><a class="btn" href="#/lab?c=${c.id}">למעבדה</a><a class="btn" href="#/brief?c=${c.id}&e=ground&g=0.75">תדריך</a>${arts.slice(0, 1).map(a => `<a class="btn" href="#/article/${a.id}" title="${a.title}">הכתבה</a>`).join("")}</div>`
+      + ph("המשך החקירה", "לפריט המדויק") + `<p class="why">${md(c.question)}</p>` + bridgesOf(c).map(k => bridgeMini(c, k)).join(""),
   });
 }
 
@@ -180,15 +238,16 @@ function lab(params) {
   const sur = { c: pick(CLIENTS.filter(x => x.id !== c.id)).id, e: pick(ELEMENTS.filter(x => x.id !== e.id)).id, g: pick(GRADIENT.slice(1)).v };
   page({
     role: "lab",
+    cls: "pg-lab",
     kicker: ` · ${c.name} × ${e.name} × ${L.v}`,
     pager: { prev: h({ c: nextOf(CLIENTS, CLIENTS.indexOf(c), -1).id }), next: h({ c: nextOf(CLIENTS, CLIENTS.indexOf(c), 1).id }), label: `${c.name} · ${e.name}` },
     title: `מה אם ה<b>${e.name}</b> היה עובד גם בשביל ה<b>${c.name}</b>?`,
     sub: `${L.name}: ${L.line}`,
     meta: `${MOVES} מהלכים<br>${GRADIENT.length} דרגות`,
     right: ph("שלוש שאלות, גילוי אחד")
-      + `<div class="card explain"><b>לקוח: למי?</b><p>שורה בטבלה. כל לקוח מבקש משהו אחר מהבניין.</p></div>`
-      + `<div class="card explain"><b>רכיב: איפה בבניין?</b><p>עמודה בטבלה. גג, חזית, קרקע ורחוב הם ארבעה קני מידה, מהבניין ועד העיר.</p></div>`
-      + `<div class="card explain"><b>דרגה: כמה נותנים?</b><p>מ-0, מרחב מחוטא, עד 1, מרחב חי. <mark>כל דרגה היא החלטת תכנון, כמו אחוזי בנייה.</mark></p></div>`
+      + `<div class="note"><b>לקוח: למי?</b><p>שורה בטבלה. כל לקוח מבקש משהו אחר מהבניין.</p></div>`
+      + `<div class="note"><b>רכיב: איפה בבניין?</b><p>עמודה בטבלה. גג, חזית, קרקע ורחוב: ארבעה קני מידה, מהבניין ועד העיר.</p></div>`
+      + `<div class="note"><b>דרגה: כמה נותנים?</b><p>מ-0, מרחב מחוטא, עד 1, מרחב חי. <mark>כל דרגה היא החלטת תכנון, כמו אחוזי בנייה.</mark></p></div>`
       + gradLine(L.v, x => h({ g: x.v }))
       + `<a class="btn primary" href="${h(sur)}">צירוף מפתיע</a>` + why("לקוח ורכיב שלא היית מצמידה. משם נולדים רעיונות."),
     focus: `<div class="quad">
@@ -201,9 +260,9 @@ function lab(params) {
         <thead><tr><th></th>${ELEMENTS.map(x => `<th><a href="${h({ e: x.id })}" ${x.id === e.id ? 'aria-current="true"' : ""}>${x.name}<small>${SCALE[x.id].replace("קנה מידה: ", "")}</small></a></th>`).join("")}</tr></thead>
         <tbody>${CLIENTS.map(x => `<tr><th class="rowh"><a href="${h({ c: x.id })}" style="color:${x.color}" ${x.id === c.id ? 'aria-current="true"' : ""}>${x.name}</a></th>${ELEMENTS.map(y =>
           `<td><a class="mcell${x.id === c.id && y.id === e.id ? " on" : ""}${x.id === c.id || y.id === e.id ? " near" : ""}" style="--c:${x.color}" href="${h({ c: x.id, e: y.id })}" title="${x.moves[y.id]}">${x.moves[y.id]}</a></td>`).join("")}</tr>`).join("")}</tbody></table></div>`,
-    left: ph("תמונה של הגילוי") + slotHTML(`img:${c.id}:${e.id}`, buildPrompt(c, e.id, L.v), c.name, { mid: true })
-      + `<div class="stack"><a class="btn primary" href="#/brief?c=${c.id}&e=${e.id}&g=${L.v}">תדריך מהגילוי</a><a class="btn" href="#/article/d-${c.id}">המאמר</a></div>`
-      + ph("המשך החקירה") + bridgeCard(c, bridgesOf(c)[0]),
+    left: ph("תמונה של הגילוי") + slotHTML(`img:${c.id}:${e.id}`, buildPrompt(c, e.id, L.v), c.name, { compact: true })
+      + `<div class="grid2"><a class="btn primary" href="#/brief?c=${c.id}&e=${e.id}&g=${L.v}">תדריך מהגילוי</a><a class="btn" href="#/article/d-${c.id}">המאמר</a></div>`
+      + ph("המשך החקירה", "לפריט המדויק") + bridgesOf(c).slice(0, 2).map(k => bridgeMini(c, k)).join(""),
   });
 }
 
@@ -413,6 +472,7 @@ function timeline(params) {
   const yearsShown = TIMELINE.map((x, i) => ({ y: x.y, i })).filter((x, i, a) => !i || x.y !== a[i - 1].y);
   page({
     layout: "wide",
+    cls: "pg-tl",
     role: "timeline",
     kicker: ` · ${TIMELINE[0].y} עד ${TIMELINE.at(-1).y} · ${TIMELINE.length} אבני דרך`,
     title: "<b>הרעיון הגיע ראשון</b>, החוק אחריו, והבניין רק עכשיו.",
@@ -427,11 +487,11 @@ function timeline(params) {
           ${k === "built" ? `<a class="tl-ev next" href="#/lab" style="--x:${pct(X.next)}"><i></i><span>הבניין הבא שלך</span></a>` : ""}</div>`).join("")}
         <div class="tl-axis">${yearsShown.map(x => `<a href="#/timeline?i=${x.i}" class="${TIMELINE[sel].y === x.y ? "on" : ""}" style="--x:${pct(X.x[x.i])}">${x.y}</a>`).join("")}<a class="nx" href="#/lab" style="--x:${pct(X.next)}">?</a></div>
       </div>
-      <p class="tl-how">${md("המרחק בין אבני הדרך **דחוס**: צעד קבוע לכל אחת, ועוד תוספת לפי מספר השנים שעברו. הזמן זורם מימין לשמאל.")}</p>
+      <p class="tl-how">${md("הזמן זורם מימין לשמאל. המרחק **דחוס**: צעד קבוע לכל אבן דרך, ועוד תוספת לפי השנים שעברו.")}</p>
     </section>
     <section class="tl-detail" style="--c:${LANES[t.lane].color}" aria-label="אבן הדרך">
-      <div class="td-year"><span class="lbl">${LANES[t.lane].name}</span><span class="ty">${t.y}</span></div>
-      <div class="td-main"><h2>${t.t}</h2><p>${md(t.d)}</p></div>
+      <div class="td-main"><div class="td-year"><span class="lbl">${LANES[t.lane].name}</span><span class="ty">${t.y}</span></div><h2>${t.t}</h2><p>${md(t.d)}</p></div>
+      <div class="td-img">${slotHTML(`tl:${t.y}:${t.t.split(" (")[0].split(",")[0]}`, { distill: "", prompt: "" }, t.t, { search: `https://commons.wikimedia.org/w/index.php?search=${encodeURIComponent((t.t.match(/\(([^)]+)\)/)?.[1] || t.t).replace(/[^\w\s³.-]/g, " ") + " " + (t.lane === "built" ? "building" : ""))}&title=Special:MediaSearch&type=image` })}</div>
       <div class="td-so"><span class="lbl">מה זה אומר לנו · פרשנות</span><p><mark>${t.so}</mark></p>
         <div class="line"><a class="btn primary" href="#/lab">מי הלקוח של 2026? למעבדה</a><a class="btn" href="#/article/planet-in-the-room">כתבת הפתיחה</a></div></div>
     </section>`,
